@@ -53,7 +53,7 @@ cap = cv2.VideoCapture(0)
 prev_frame_time = 0
 new_frame_time = 0
 while(True):
-	with mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.1, model_complexity=2) as pose:
+	with mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.1) as pose:
 		# Convert the BGR image to RGB and process it with MediaPipe Pose.
 		ret, image = cap.read()
 		new_frame_time = time.time()
