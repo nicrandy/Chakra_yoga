@@ -1,4 +1,4 @@
-mediapipe
+mediapipe==0.8.4.2
 opencv-python
 scikit-learn
 keyboard
