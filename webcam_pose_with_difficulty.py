@@ -129,7 +129,7 @@ def countdown_timer(avg_percent):
 		time.sleep(2)
 	return time_remaining
 
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 #save time start and stop processing
 prev_frame_time = 0
 new_frame_time = 0
