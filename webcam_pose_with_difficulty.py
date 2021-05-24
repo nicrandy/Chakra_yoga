@@ -87,6 +87,30 @@ def change_pose(up_down):
 		else:
 			current_pose = (len(current_pose_list) - 1)
 
+#calculate pose scores
+current_pose_score = []
+def calculate_score(current_pose_percentage):
+	global current_pose_score
+	if timer_started == True:
+		current_pose_score.append(current_pose_percentage)
+		length = len(current_pose_score)
+		total = sum(current_pose_score)
+		score = total / length
+		grade = 'C'
+		if score < 10:
+			grade = 'D'
+		if score >= 10 and score < 30:
+			grade = 'C'
+		if score >= 30 and score < 50:
+			grade = 'B'
+		if score >= 50 and score < 70:
+			grade = 'A'
+		if score > 85:
+			grade = 'S'
+		return grade
+
+#for countdown timer
+time_per_pose = 30 #adjust number of seconds per pose
 timer_started = False
 start_pose_time = time.time()
 def countdown_timer(avg_percent):
@@ -95,13 +119,14 @@ def countdown_timer(avg_percent):
 	if avg_percent > 10 and timer_started == False:
 		start_pose_time = time.time()
 		timer_started = True
-	time_remaining = 30 - (time.time() - start_pose_time)
+	time_remaining = time_per_pose - (time.time() - start_pose_time)
 	print("time_remaining:", time_remaining)
-	if time_remaining < 0 and timer_started == True:
+	if time_remaining <= 0 and timer_started == True:
+		avg_pose_percent_array = [0,0,0,0,0]
+		current_pose_score = []
 		change_pose(1)
 		timer_started = False
-		time.sleep(1)
-
+		time.sleep(2)
 	return time_remaining
 
 cap = cv2.VideoCapture(1)
@@ -113,17 +138,18 @@ current_pose_list,current_pose_numbers = pose_difficulty_selecter(0,7)
 #start loop for BlazePose network
 mp_pose = mp.solutions.pose
 while(True):
-	with mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.1, model_complexity=2) as pose:
+	with mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.1, model_complexity=1) as pose:
 
 		# Convert the BGR image to RGB and process it with MediaPipe Pose.
 		ret, image = cap.read()
+		image = cv2.flip(image,1)
 		# image = cv2.rotate(image,cv2.ROTATE_90_CLOCKWISE)
 		new_frame_time = time.time()#to calculate fps
 		results = pose.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
 		pose_landmarks = results.pose_landmarks
 
 		#adjust output image size
-		output_increase = 1.5
+		output_increase = 2
 		image_hight, image_width, _ = image.shape
 		enlarge_hight = int(output_increase*image_hight)
 		enlarge_width = int(output_increase*image_width)
@@ -155,6 +181,7 @@ while(True):
 		fps = 1/(new_frame_time-prev_frame_time)
 		prev_frame_time = new_frame_time
 		fps = str(int(fps))
+
 		desired_pose = int(current_pose_numbers[current_pose])
 		print("current pose number : ", desired_pose)
 		if results.pose_landmarks != None:
@@ -173,15 +200,21 @@ while(True):
 					# cv2.putText(annotated_image, landmark_names[body_part], (xloc, yloc), cv2.FONT_HERSHEY_SIMPLEX, font_size, (0, 255, 0), 2, cv2.LINE_AA)
 				body_part += 1
 			#get average of recent pose percentages to smooth out fluctuations
-			
 			pose_percent = get_pose_from_landmarks(landmarks_to_save, desired_pose)
 			avg_pose_percent_array.pop(0)
 			avg_pose_percent_array.append(pose_percent)
-			avg_percent = sum(avg_pose_percent_array) / len(avg_pose_percent_array)
+			avg_percent = 0
+			if timer_started == True or pose_percent > .01:
+				avg_percent = sum(avg_pose_percent_array) / len(avg_pose_percent_array)
+			else:
+				avg_percent = 0
 			print("avg_posearray:", avg_pose_percent_array)
 			print("avg percent:", avg_percent)
 			avg_percent_string = str(avg_percent)
+			pose_scoring = calculate_score(int(avg_percent))
+			print("pose scoring",pose_scoring)
 
+			#get name of current pose
 			pose_class = pose_name(int(current_pose_numbers[current_pose]))
 			pose_class = pose_class.rstrip(pose_class[-1])
 			
@@ -189,12 +222,13 @@ while(True):
 			#control timer
 			time_remaining = countdown_timer(avg_percent)
 			if timer_started == True:
-				cv2.putText(annotated_image, "Time: " + str(int(time_remaining)), ((x_offset +20), (y_offset-30)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1, cv2.LINE_AA,bottomLeftOrigin = False)
+				cv2.putText(annotated_image, "Time: " + str(int(time_remaining)), ((x_offset +20), (y_offset-95)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1, cv2.LINE_AA,bottomLeftOrigin = False)
 			else:
-				cv2.putText(annotated_image, "Ready", ((x_offset +20), (y_offset-30)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1, cv2.LINE_AA,bottomLeftOrigin = False)
+				cv2.putText(annotated_image, "Ready", ((x_offset +20), (y_offset-95)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1, cv2.LINE_AA,bottomLeftOrigin = False)
 
+			cv2.putText(annotated_image, pose_scoring, ((x_offset +20), (y_offset-35)), cv2.FONT_HERSHEY_SIMPLEX, 1, (50, 255, 50), 1, cv2.LINE_AA,bottomLeftOrigin = False)	
 			cv2.putText(annotated_image, str(pose_class), ((x_offset +20), (y_offset-5)), cv2.FONT_HERSHEY_SIMPLEX, .5, (255, 255, 255), 1, cv2.LINE_AA,bottomLeftOrigin = False)
-			cv2.putText(annotated_image, avg_percent_string+"%", (5, 35), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA,bottomLeftOrigin = False)
+			cv2.putText(annotated_image, avg_percent_string+"%", ((x_offset +20), (y_offset-65)), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA,bottomLeftOrigin = False)
 			#cv2.putText(annotated_image, "Change pose <- or -> key", (50, image_hight-20), cv2.FONT_HERSHEY_SIMPLEX, .75, (100, 150, 255), 2, cv2.LINE_AA,bottomLeftOrigin = False)
 
 			# Draw pose landmarks.
