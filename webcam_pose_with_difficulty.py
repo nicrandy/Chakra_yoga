@@ -59,7 +59,7 @@ def pose_difficulty_selecter(difficulty,poses_to_select):
 	print("Pose image links ", pose_image_links)
 	return pose_image_links,pose_numbers
 
-print(pose_difficulty_selecter(0,5))
+print(pose_difficulty_selecter(0,7))
 
 #get probability percent based on target pose and output of SVC
 def get_pose_from_landmarks(landmarks,pose):
@@ -110,7 +110,7 @@ def calculate_score(current_pose_percentage):
 		return grade
 
 #for countdown timer
-time_per_pose = 30 #adjust number of seconds per pose
+time_per_pose = 15 #adjust number of seconds per pose
 timer_started = False
 start_pose_time = time.time()
 def countdown_timer(avg_percent):
@@ -129,19 +129,34 @@ def countdown_timer(avg_percent):
 		time.sleep(2)
 	return time_remaining
 
-cap = cv2.VideoCapture(0)
+
+source = 0
+def test_cap():
+	loop = False
+	global source
+	while loop == False:
+		cap = cv2.VideoCapture(source)
+		if cap is None or not cap.isOpened():
+			source += 1
+		else:
+			break
+test_cap()
+
+
+cap = cv2.VideoCapture(source)
 #save time start and stop processing
 prev_frame_time = 0
 new_frame_time = 0
-current_pose_list,current_pose_numbers = pose_difficulty_selecter(0,7)
+current_pose_list,current_pose_numbers = pose_difficulty_selecter(0,10)
 
 #start loop for BlazePose network
 mp_pose = mp.solutions.pose
 while(True):
-	with mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.1, model_complexity=1) as pose:
+	with mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.1, model_complexity=2) as pose:
 
 		# Convert the BGR image to RGB and process it with MediaPipe Pose.
 		ret, image = cap.read()
+
 		image = cv2.flip(image,1)
 		# image = cv2.rotate(image,cv2.ROTATE_90_CLOCKWISE)
 		new_frame_time = time.time()#to calculate fps
@@ -229,6 +244,9 @@ while(True):
 			cv2.putText(annotated_image, pose_scoring, ((x_offset +20), (y_offset-35)), cv2.FONT_HERSHEY_SIMPLEX, 1, (50, 255, 50), 1, cv2.LINE_AA,bottomLeftOrigin = False)	
 			cv2.putText(annotated_image, str(pose_class), ((x_offset +20), (y_offset-5)), cv2.FONT_HERSHEY_SIMPLEX, .5, (255, 255, 255), 1, cv2.LINE_AA,bottomLeftOrigin = False)
 			cv2.putText(annotated_image, avg_percent_string+"%", ((x_offset +20), (y_offset-65)), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA,bottomLeftOrigin = False)
+			#display camera source for testing 
+			cv2.putText(annotated_image, "Source: " + str(source), ((x_offset +20), (y_offset-200)), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA,bottomLeftOrigin = False)
+			
 			#cv2.putText(annotated_image, "Change pose <- or -> key", (50, image_hight-20), cv2.FONT_HERSHEY_SIMPLEX, .75, (100, 150, 255), 2, cv2.LINE_AA,bottomLeftOrigin = False)
 
 			# Draw pose landmarks.
@@ -246,7 +264,10 @@ while(True):
 		else:
 			# cv2.putText(image, fps, (7, 70), cv2.FONT_HERSHEY_SIMPLEX, 3, (100, 255, 0), 3, cv2.LINE_AA)
 			image = cv2.resize(image,large_image,interpolation = cv2.INTER_AREA)
+			cv2.putText(image, "Source: " + str(source), ((x_offset +20), (y_offset-200)), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA,bottomLeftOrigin = False)
+
 			cv2.imshow('Pose',image)
+
 		if cv2.waitKey(1) & 0xFF == ord('q'):
 			break
 	
