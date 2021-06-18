@@ -7,6 +7,7 @@ import keyboard as kb
 import os
 from random import sample
 import array
+import time
 
 #global variables
 current_pose = 0 #track current pose number
@@ -149,6 +150,15 @@ prev_frame_time = 0
 new_frame_time = 0
 current_pose_list,current_pose_numbers = pose_difficulty_selecter(0,10)
 
+#location to save video to
+path = "C:/Users/User/Videos/timelapse/"
+frame_width = int(cap.get(3))
+frame_height = int(cap.get(4))
+fourcc=cv2.VideoWriter_fourcc('M','J','P','G')
+nowtime = str(int(time.time()))
+out = cv2.VideoWriter(path+'yoga_practice_'+nowtime+'.avi',fourcc, 7, (frame_width,frame_height))
+
+
 #start loop for BlazePose network
 mp_pose = mp.solutions.pose
 while(True):
@@ -256,7 +266,9 @@ while(True):
 				connections=mp_pose.POSE_CONNECTIONS,
 				landmark_drawing_spec=drawing_spec,
 				connection_drawing_spec=drawing_spec)
-		
+			#save image to file
+			out.write(annotated_image)
+
 			#display fps if desired
 			# cv2.putText(annotated_image, "FPS:"+fps, (7, 25), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 2, cv2.LINE_AA)
 			annotated_image = cv2.resize(annotated_image,large_image,interpolation = cv2.INTER_AREA)
