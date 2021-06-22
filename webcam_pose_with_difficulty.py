@@ -162,7 +162,7 @@ out = cv2.VideoWriter(path+'yoga_practice_'+nowtime+'.avi',fourcc, 7, (frame_wid
 #start loop for BlazePose network
 mp_pose = mp.solutions.pose
 while(True):
-	with mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.1, model_complexity=2) as pose:
+	with mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.1, model_complexity=1) as pose:
 
 		# Convert the BGR image to RGB and process it with MediaPipe Pose.
 		ret, image = cap.read()
