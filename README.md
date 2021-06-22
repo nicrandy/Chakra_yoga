@@ -1,3 +1,5 @@
+ ![plot](./yoga_demo.gif)
+ 
  Make sure you have Python installed on your computer.
  Open a terminal/command window and input the below lines one by one.
  You need to have a webcam to use the yoga pose programme.
