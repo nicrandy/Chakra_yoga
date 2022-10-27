@@ -1,5 +1,7 @@
  ![plot](./yoga_demo.gif)
  
+ The orgional idea behind https://www.myogai.com
+ 
  Make sure you have Python installed on your computer.
  Open a terminal/command window and input the below lines one by one.
  You need to have a webcam to use the yoga pose programme.
